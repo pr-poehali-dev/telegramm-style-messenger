@@ -6,6 +6,8 @@ export interface Message {
   isRead: boolean;
 }
 
+export type ChatCategory = 'personal' | 'work' | 'archived';
+
 export interface Chat {
   id: number;
   name: string;
@@ -15,6 +17,7 @@ export interface Chat {
   unread: number;
   online: boolean;
   typing?: boolean;
+  category: ChatCategory;
 }
 
 export type SidebarSection = 'chats' | 'contacts' | 'groups' | 'archive' | 'profile' | 'settings';
@@ -28,6 +31,7 @@ export const mockChats: Chat[] = [
     time: '14:32',
     unread: 2,
     online: true,
+    category: 'personal',
   },
   {
     id: 2,
@@ -37,6 +41,7 @@ export const mockChats: Chat[] = [
     time: '13:15',
     unread: 5,
     online: false,
+    category: 'work',
   },
   {
     id: 3,
@@ -47,6 +52,7 @@ export const mockChats: Chat[] = [
     unread: 0,
     online: true,
     typing: true,
+    category: 'personal',
   },
   {
     id: 4,
@@ -56,6 +62,7 @@ export const mockChats: Chat[] = [
     time: 'Вчера',
     unread: 0,
     online: false,
+    category: 'work',
   },
   {
     id: 5,
@@ -65,6 +72,27 @@ export const mockChats: Chat[] = [
     time: 'Вчера',
     unread: 0,
     online: false,
+    category: 'archived',
+  },
+  {
+    id: 6,
+    name: 'Отдел продаж',
+    avatar: 'ОП',
+    lastMessage: 'Новые лиды готовы',
+    time: '2 дня назад',
+    unread: 0,
+    online: false,
+    category: 'work',
+  },
+  {
+    id: 7,
+    name: 'Дмитрий Волков',
+    avatar: 'ДВ',
+    lastMessage: 'До встречи!',
+    time: '3 дня назад',
+    unread: 0,
+    online: false,
+    category: 'archived',
   },
 ];
 

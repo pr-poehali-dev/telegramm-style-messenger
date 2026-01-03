@@ -4,7 +4,9 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Chat, SidebarSection } from './types';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Chat, SidebarSection, ChatCategory } from './types';
+import { useState } from 'react';
 
 interface ChatListPanelProps {
   sidebarSection: SidebarSection;
@@ -23,6 +25,48 @@ const ChatListPanel = ({
   selectedChat,
   setSelectedChat,
 }: ChatListPanelProps) => {
+  const [openCategories, setOpenCategories] = useState<Record<ChatCategory, boolean>>({
+    personal: true,
+    work: true,
+    archived: true,
+  });
+
+  const toggleCategory = (category: ChatCategory) => {
+    setOpenCategories((prev) => ({ ...prev, [category]: !prev[category] }));
+  };
+
+  const getCategoryName = (category: ChatCategory) => {
+    switch (category) {
+      case 'personal':
+        return 'Личные';
+      case 'work':
+        return 'Рабочие';
+      case 'archived':
+        return 'Архивные';
+    }
+  };
+
+  const getCategoryIcon = (category: ChatCategory) => {
+    switch (category) {
+      case 'personal':
+        return 'User';
+      case 'work':
+        return 'Briefcase';
+      case 'archived':
+        return 'Archive';
+    }
+  };
+
+  const groupedChats = filteredChats.reduce((acc, chat) => {
+    if (!acc[chat.category]) {
+      acc[chat.category] = [];
+    }
+    acc[chat.category].push(chat);
+    return acc;
+  }, {} as Record<ChatCategory, Chat[]>);
+
+  const categories: ChatCategory[] = ['personal', 'work', 'archived'];
+
   return (
     <div className="w-96 bg-card border-r border-border flex flex-col">
       <div className="p-4 border-b border-border bg-gradient-to-r from-primary/5 to-secondary/5">
@@ -52,57 +96,94 @@ const ChatListPanel = ({
       <ScrollArea className="flex-1">
         {sidebarSection === 'chats' && (
           <div className="p-2">
-            {filteredChats.map((chat) => (
-              <button
-                key={chat.id}
-                onClick={() => setSelectedChat(chat)}
-                className={`w-full p-4 rounded-2xl mb-2 transition-all hover:scale-[1.02] hover:shadow-md group ${
-                  selectedChat.id === chat.id
-                    ? 'bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm'
-                    : 'hover:bg-muted/50'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative">
-                    <Avatar className="w-12 h-12 ring-2 ring-white shadow-md">
-                      <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold">
-                        {chat.avatar}
-                      </AvatarFallback>
-                    </Avatar>
-                    {chat.online && (
-                      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
-                    )}
-                  </div>
+            {categories.map((category) => {
+              const categoryChats = groupedChats[category] || [];
+              if (categoryChats.length === 0) return null;
 
-                  <div className="flex-1 text-left min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-foreground truncate">
-                        {chat.name}
-                      </h3>
-                      <span className="text-xs text-muted-foreground ml-2">
-                        {chat.time}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground truncate">
-                        {chat.typing ? (
-                          <span className="text-accent italic">
-                            печатает...
-                          </span>
-                        ) : (
-                          chat.lastMessage
-                        )}
-                      </p>
-                      {chat.unread > 0 && (
-                        <Badge className="ml-2 bg-gradient-to-r from-primary to-secondary text-white border-0 shadow-md">
-                          {chat.unread}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </button>
-            ))}
+              return (
+                <Collapsible
+                  key={category}
+                  open={openCategories[category]}
+                  onOpenChange={() => toggleCategory(category)}
+                  className="mb-2"
+                >
+                  <CollapsibleTrigger className="w-full flex items-center gap-2 px-3 py-2 hover:bg-muted/50 rounded-xl transition-colors group">
+                    <Icon
+                      name={getCategoryIcon(category) as any}
+                      size={16}
+                      className="text-muted-foreground"
+                    />
+                    <span className="text-sm font-semibold text-muted-foreground flex-1 text-left">
+                      {getCategoryName(category)}
+                    </span>
+                    <Badge variant="secondary" className="text-xs">
+                      {categoryChats.length}
+                    </Badge>
+                    <Icon
+                      name="ChevronDown"
+                      size={16}
+                      className={`text-muted-foreground transition-transform ${
+                        openCategories[category] ? 'rotate-180' : ''
+                      }`}
+                    />
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent className="mt-1">
+                    {categoryChats.map((chat) => (
+                      <button
+                        key={chat.id}
+                        onClick={() => setSelectedChat(chat)}
+                        className={`w-full p-4 rounded-2xl mb-2 transition-all hover:scale-[1.02] hover:shadow-md group ${
+                          selectedChat.id === chat.id
+                            ? 'bg-gradient-to-r from-primary/10 to-secondary/10 shadow-sm'
+                            : 'hover:bg-muted/50'
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <div className="relative">
+                            <Avatar className="w-12 h-12 ring-2 ring-white shadow-md">
+                              <AvatarFallback className="bg-gradient-to-br from-primary to-secondary text-white font-semibold">
+                                {chat.avatar}
+                              </AvatarFallback>
+                            </Avatar>
+                            {chat.online && (
+                              <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white" />
+                            )}
+                          </div>
+
+                          <div className="flex-1 text-left min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-semibold text-foreground truncate">
+                                {chat.name}
+                              </h3>
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {chat.time}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm text-muted-foreground truncate">
+                                {chat.typing ? (
+                                  <span className="text-accent italic">
+                                    печатает...
+                                  </span>
+                                ) : (
+                                  chat.lastMessage
+                                )}
+                              </p>
+                              {chat.unread > 0 && (
+                                <Badge className="ml-2 bg-gradient-to-r from-primary to-secondary text-white border-0 shadow-md">
+                                  {chat.unread}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            })}
           </div>
         )}
 
